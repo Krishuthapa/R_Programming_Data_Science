@@ -1,0 +1,385 @@
+---
+title: "Assignment 5 (Machine Learning)"
+author: "Krishu Thapa"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+## Question 1
+
+```{r, chunk-label,echo = TRUE , eval=TRUE}
+# Loading the wine data.
+wineQuality = read.csv('winequality-red.csv', sep=',', header = TRUE)
+
+```
+
+#### 1a. \
+
+The multiple linear regression on the pH response using all the predictors except fixed_acidity is shown below:
+
+```{r , eval=TRUE , echo=TRUE}
+
+lm.fit=lm(pH~.-fixed_acidity,data=wineQuality)
+
+summary(lm.fit)
+```
+\
+\
+i. From the summary above we can see that the statistically significant predictors in  our model are
+citric_acid, chlorides , free_sulfur_dioxide, alcohol and quantity because they have the p-value less than 0.01 , which shows that they are significant to reject their null hypotheis.\
+\
+ii. The coefficient of free_sulfur_dioxide is that if there is change in the value of sulfur_dioxide by +1 or -1 , the value of pH changes by +0.001447 or -0.001447 respectively which is the coefficient value.
+
+
+#### 1b.
+
+The diagnostic plot for the above regression model is shown below:
+
+```{r , echo=TRUE , eval=TRUE}
+
+par(mfrow=c(2,2))
+plot(lm.fit)
+```
+No, the leverage plot doesnot show any unusually high leverage as no points lie outside the cook's distance as seen in the plot above. From the residual plot we can see that there are few outliers like the points 1317, 1018 etc.
+
+#### 1c.
+
+For the interaction with the alcohol we obatin the following models:
+
+```{r, eval=TRUE, echo=TRUE}
+
+# For density and alcohol
+lm.fit1 = lm(pH~.-fixed_acidity+ density*alcohol, data = wineQuality)
+summary(lm.fit1)$coefficients[,4]
+
+# For interaction of residual_sugar and alcohol
+lm.fit2 = lm(pH~.-fixed_acidity+ residual_sugar*alcohol, data = wineQuality)
+summary(lm.fit2)$coefficients[,4]
+
+# For interaction quality and alcohol
+lm.fit3 = lm(pH~.-fixed_acidity+ quality*alcohol, data = wineQuality)
+summary(lm.fit3)$coefficients[,4]
+
+```
+\
+
+The p values for lm.fit1 ,lm.fit2 and lm.fit3 are 0.00123 , 0.086 and 0.245 respectively. Hence we can say that the interaction in model lm.fit1 (i.e density and alcohol) is the most significant interaction as its p value is lowest and <0.01.
+
+## Question 2.
+
+#### 2a.
+
+Loading the boston data set from the mass library in R and seting up the model for each predictors.
+
+```{r , echo=TRUE, eval=TRUE}
+
+library(MASS)
+
+suppressMessages(attach(Boston))
+
+lm.fit1=lm(crim~zn)
+lm.fit2=lm(crim~indus)
+lm.fit3=lm(crim~chas)
+lm.fit4=lm(crim~nox)
+lm.fit5=lm(crim~rm)
+lm.fit6=lm(crim~age)
+lm.fit7=lm(crim~dis)
+lm.fit8=lm(crim~rad)
+lm.fit9=lm(crim~tax)
+lm.fit10=lm(crim~ptratio)
+lm.fit11=lm(crim~black)
+lm.fit12=lm(crim~lstat)
+lm.fit13=lm(crim~medv) 
+
+```
+
+#### 2b.
+
+Running the above codes we found out that the statisitically significant predictors are zn, indus , nox, rm , age, dis ,rad ,tax, ptratio, black , lstat and medv since all of their 
+\
+```{r, eval=TRUE, echo=TRUE}
+
+# For nox
+summary(lm.fit4)$coefficients
+
+# For chas
+summary(lm.fit3)$coefficients
+
+# For rm
+summary(lm.fit5)$coefficients
+
+# For dis
+summary(lm.fit7)$coefficients
+
+# For medv
+summary(lm.fit13)$coefficients
+
+
+```
+
+**For nox**,
+\
+
+There is a statistically significant association between this predictor and crim as p < 0.01. Also, for each unit change in the nox value there is the change in value of crim bt 31.2483 in the same direction which is the coefficient here. This is the most significant predictor as seen from the p-value in comparision to other predictors.\
+\
+
+**For chas**,\
+\
+Here, the association of the predictor is not statistically significant with the response crim as the p-value for chas is > 0.01.\
+
+**For rm**,\
+
+The association is statistically significant since p < 0.01 and for the unit increase in the value of predictor the value of crim
+decreases by 2.68 and vice versa.
+
+**For dis**,\
+
+The association is statistically significant since p < 0.01 and for the unit increase in the value of predictor the value of crim
+decreases by 1.55 and vice versa.
+
+**For medv**,\
+
+The association is statistically significant since p < 0.01 and for the unit increase in the value of predictor the value of crim
+decreases by 0.36 and vice versa.
+
+#### 2c.
+
+The multiple linear regression model is shown below:
+
+```{r , echo=TRUE, eval=TRUE}
+lm.fitall = lm(crim~.,data= Boston)
+
+summary(lm.fitall)
+
+```
+We can see that the pvalue for predictors **dis, rad** is <0.01. Hence we can reject the null hypothesis for these two predictors.
+
+#### 2d.
+
+Few of the predictors which had statistically significant association with the crim value when take individually in a. is no longer significant when we take all predictors at once for the model in c. For example: zn , indus , nox , rm ,age etc.
+
+```{r , echo=TRUE , eval=TRUE}
+
+univariateCoef <- c(coef(lm.fit1)[2], coef(lm.fit2)[2],coef(lm.fit3)[2],
+                    coef(lm.fit4)[2],coef(lm.fit5)[2],coef(lm.fit6)[2],
+                    coef(lm.fit7)[2],coef(lm.fit8)[2],coef(lm.fit9)[2],
+                    coef(lm.fit10)[2],coef(lm.fit11)[2],coef(lm.fit12)[2],
+                    coef(lm.fit13)[2])
+
+multipleRegressionCoef <- coef(lm.fitall)[2:14]
+
+plot(univariateCoef , multipleRegressionCoef, pch =1:13, xlab = "Single Regression Coefficient Values", ylab="Multiple Regression Coefficient Values")
+title(main = "Simple vs Multiple Regression Predictor Coefficient Values")
+text(univariateCoef, multipleRegressionCoef, names(Boston)[2:14], cex=0.6, 
+     pos=2, col="red")
+
+```
+\
+From the graph above we can notice that most of the coefficients have a low value expect for the one at the 
+bottom right which is nox i.e Unit change in nox causes high value of change in the crim. 
+
+#### 2e.
+
+Non-linear association of each predictors with the response variable crim is given by:
+
+```{r, echo=TRUE, eval=TRUE}
+
+lm.poly1=lm(crim~poly(zn,3,raw = TRUE))
+lm.poly2=lm(crim~poly(indus, 3 , raw = TRUE))
+lm.poly3=lm(crim~poly(chas,3,raw = TRUE))
+lm.poly4=lm(crim~poly(nox,3, raw = TRUE))
+lm.poly5=lm(crim~poly(rm,3, raw = TRUE))
+lm.poly6=lm(crim~poly(age,3, raw = TRUE))
+lm.poly7=lm(crim~poly(dis,3,raw = TRUE))
+lm.poly8=lm(crim~poly(rad,3,raw = TRUE))
+lm.poly9=lm(crim~poly(tax,3,raw = TRUE))
+lm.poly10=lm(crim~poly(ptratio,3,raw = TRUE))
+lm.poly11=lm(crim~poly(black,3,raw = TRUE))
+lm.poly12=lm(crim~poly(lstat,3,raw = TRUE))
+lm.poly13=lm(crim~poly(medv,3,raw = TRUE))
+
+```
+\
+There seems to be some traces of slight deviation of the polynomial model from the linear fitting line however there are no evidence of complete nonlinearity in any of the predictors with the response variable crim.
+
+## Question 3.
+
+#### 3a.
+
+Given,
+
+  $X_1 = 32$\
+  $X_2 = 3$\
+  $X_3 = 11$\
+  
+Now,\
+
+  p(A) = $\frac{e^{\beta_0 +  \beta_1 * X_1 + \beta_2 * X_2 + \beta_3 * X_3 }}{1 + e^{\beta_0 +  \beta_1 * X_1 + \beta_2 * X_2 + \beta_3 * X_3 }}$\
+  
+  p(A) = $\frac{e^{-8 +  0.1 * 32 + 1 * 3 + -.04 * 11  }}{1 + e^{-8 +  0.1 * 32 + 1 * 3 + -.04 * 11}}$\
+  
+  p(A) = 9.6% \
+
+Hence probability of getting A is 9.6%
+  
+#### 3b.
+
+Given,
+
+$p(A) = 0.65$\
+$X_2 = 3$\
+$X_3 = 11$ \
+
+Now, 
+
+ $log(\frac{p(x)}{1-p(x)}) = \beta_0 +  \beta_1 * X_1 + \beta_2 * X_2 + \beta_3 * X_3$\
+ 
+ $log(\frac{.65}{.35}) = -8 +  0.1 * X_1 + 1 * 3 + -.04 * 11$\
+ 
+ Solving above equation we get,\
+ 
+ $X_2 = 60.59 hrs$ \
+ 
+ Hence to have a 65% chance of getting A , the person must study 60.59 hrs.
+ 
+
+#### 3c.
+
+Given,
+
+$p(A) = 0.60$\
+$X_2 = 3$\
+$X_3 = 3$ \
+
+Now, 
+
+ $log(\frac{p(x)}{1-p(x)}) = \beta_0 +  \beta_1 * X_1 + \beta_2 * X_2 + \beta_3 * X_3$\
+ 
+ $log(\frac{.60}{.40}) = -8 +  0.1 * X_1 + 1 * 3 + -.04 * 3$\
+ 
+ Solving above equation we get,\
+ 
+ $X_2 = 55.25 hrs$ \
+ 
+ Hence to have a 60% chance of getting A , the person must study 55.25 hrs. 
+ 
+## Question 4.
+
+Loading the bbc data:
+
+```{r, eval=TRUE, echo=TRUE}
+
+# Loading the bbc data.
+bbc = read.csv('bbc.csv', sep=',', header = TRUE)
+
+bbc <- bbc[sample(1:nrow(bbc)), ]
+```
+
+#### 4a.
+
+The preprocessing and tokenization step is shown below: \
+
+```{r, eval=TRUE,echo=TRUE}
+
+library(tidyr)
+library(tm)
+suppressMessages(library(dplyr))
+
+bbc_stemmed <- stemDocument(bbc$text, language="english") 
+
+bbc_corpus <- Corpus(VectorSource(bbc_stemmed))
+
+bbc_corpus <- bbc_corpus %>% tm_map(content_transformer(tolower)) %>% 
+  tm_map(removeNumbers) %>% 
+  tm_map(removePunctuation) %>%
+  tm_map(stripWhitespace) %>%
+  tm_map(removeWords, c("the", "and", stopwords("english")))
+
+bbc_dtm <- DocumentTermMatrix(bbc_corpus)
+
+# Finding 10% least frequent terms.
+freq <- colSums(as.matrix(bbc_dtm))
+ord <- order(freq, decreasing = FALSE) 
+least_freq_words <- freq[head(ord, n = 0.1 * ncol(bbc_dtm))]
+
+# Removing the 10% least used word and constructing final document term matrix.
+final_corpus <- tm_map(bbc_corpus, removeWords , names(least_freq_words))
+final_dtm <- DocumentTermMatrix(final_corpus)
+
+# For the word count in the 2100 data.
+bbc_data_frame_final <-  as.data.frame(as.matrix(final_dtm), stringsAsFactors=False)
+
+# Showing columns in row 2100 with value >4.
+bbc_data_frame_final[2100,] %>% select(where(~ any(. > 4)))
+
+
+```
+Note: Even after removing the 10% of less frequent terms there are large feature terms nearly 24k which makes the computation very slow.So, for this reference I have only kept the 20% higher frequency word for naive bayes as sparsity is extremely high.
+
+#### 4b.
+
+The naive bayes implementation is shown below:
+
+```{r, echo=TRUE, eval=TRUE}
+
+set.seed(7)
+
+suppressMessages(library(caret))
+suppressMessages(library(e1071))
+suppressMessages(library(quanteda))
+suppressMessages(library(randomForest))
+
+
+# Getting the top 20% frequently repeated terms.
+
+feature_matrix <- dfm_trim(as.dfm(final_dtm), min_docfreq = 100,
+min_termfreq = 0.2, termfreq_type = "quantile")
+
+
+document_matrix <- as.matrix(feature_matrix)
+
+correlated_matrix <- cor(as.matrix(document_matrix))
+correlated_terms <- findCorrelation(correlated_matrix , cutoff =.80)
+
+# Removing the corelated terms
+document_matrix <- document_matrix[,-c(correlated_terms)]
+
+
+# Training and testing division
+
+train_size <- floor(0.85 * nrow(document_matrix))
+
+train_x <- document_matrix[1:train_size,]
+train_y <- as.factor(bbc[1:train_size,]$category)
+
+test_x <- document_matrix[(train_size+1) : nrow(document_matrix),]
+test_y <- as.factor(bbc[(train_size+1): nrow(document_matrix),]$category)
+
+naiveBayesModel <- naiveBayes(train_x,train_y)
+prediction<- predict(naiveBayesModel,test_x)
+
+# Confusion matrix
+
+confusion_matrix <- confusionMatrix(prediction,test_y)
+
+print("Confusion Matrix")
+confusion_matrix
+
+# Precision
+
+print("Precision:")
+confusion_matrix$byClass[1:5,3]
+
+# Recall
+
+print("Recall:")
+confusion_matrix$byClass[1:5,1]
+
+
+
+```
+

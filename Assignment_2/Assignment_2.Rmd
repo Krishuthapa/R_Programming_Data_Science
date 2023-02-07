@@ -1,0 +1,493 @@
+---
+title: 'Assignment 2 : R Basics and Exploratory Data Analysis'
+author: "Krishu Kumar Thapa"
+date: "2022-09-04"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Working on Red Wine Quality data.\
+
+## Question 1a.\
+
+The csv file for red wine quality has been loaded using **read.csv()** as shown in the chunk below:\
+
+```{r, chunk-label, eval=TRUE, echo=TRUE}
+
+redwine = read.csv('winequality-red.csv', sep=',', header = TRUE)
+
+str(redwine)
+
+```
+\
+Also the header has been discarded from being considered as the row from the config *header=TRUE*.
+
+
+## Question 1b.\
+
+The median of the *quality* of all wines can be computed with the code below:\
+
+```{r, eval= TRUE , echo= TRUE}
+  
+median(redwine$quality)
+
+```
+\
+Similarly we can compute the mean *alcohol level* with the help of code below:\
+
+```{r, eval= TRUE , echo= TRUE}
+  
+mean(redwine$alcohol)
+
+```
+
+## Question 1c.
+
+Showing the scatter plot between two data level , namely **free_sulfur_dioxide** and **total_sulfur_dioxide** \
+
+
+```{r ,fig.asp=0.8,fig.width=10, eval=TRUE, echo= TRUE}
+
+# install.packages(ggplot2)
+
+library(ggplot2)
+
+plotsetup <- ggplot(redwine, aes(x= free_sulfur_dioxide, y= total_sulfur_dioxide))
+
+plotcolor <- plotsetup + geom_point(color= "blue")+theme_minimal()
+
+finalplot <- plotcolor+ labs(x="Free Sulfur Dioxide", y= "Total Sulfure Dioxide", 
+             title= "Total vs Free Sulfur Dioxide")+
+            theme(plot.title = element_text(hjust = 0.5))
+
+finalplot
+```
+\
+
+## Question 1d.
+
+Creating new variable ALevel based on the given condition in the question.
+
+```{r, eval=TRUE, echo =TRUE}
+
+alabel <- c('High','Medium')
+
+redwine$ALevel <- as.factor(ifelse(redwine$alcohol > 10.2 , "HIGH", "MEDIUM"))
+
+str(redwine)
+```
+\
+Creating the plot:\
+
+```{r, eval= TRUE , echo =TRUE}
+
+redwine$stc <- redwine$sulphates / redwine$chlorides
+
+plotsetup <- ggplot(redwine, aes(x= ALevel, y= stc))
+
+plotcolor <- plotsetup + geom_boxplot()+theme_minimal()
+
+finalplot <- plotcolor+ labs(x="Alcohol Level", y= "Sulphate to Chloride", 
+             title= "Sulphates to Chloride vs Alcohol Level ")+
+            theme(plot.title = element_text(hjust = 0.5))
+
+finalplot
+
+```
+\
+Number of samples in **HIGH** is given by:\
+
+```{r, echo=TRUE, eval=TRUE}
+
+length(which(redwine$ALevel== 'HIGH'))
+
+```
+
+## Question 1e.\
+
+Plotting the ALevel against total_sulfur_dioxide:\
+
+```{r, echo= TRUE, eval= TRUE}
+
+extractedDataFrame <- data.frame(ALevel = redwine$ALevel,
+                            total_sulfur_dioxide = redwine$total_sulfur_dioxide)
+
+plotsetup <- ggplot(extractedDataFrame, aes(x= total_sulfur_dioxide, 
+          color= ALevel))
+
+plotcolor <- plotsetup + geom_histogram(bins='20',alpha= 0.2)+ 
+  scale_color_discrete(name="Alcohol Level")+
+  scale_fill_manual(values= c("blue", "red"))+theme_minimal()
+
+finalplot <- plotcolor+ labs(x="Total Sulfur Dioxide", y= "Count", 
+             title= "Total Sulfur Dioxide for Different Alcohol Level ")+
+            theme(plot.title = element_text(hjust = 0.5))
+
+finalplot
+
+```
+
+
+## Question 1f.\
+\
+i. First I want to plot the chart to see the relation of *pH* value with *citric_acid*. \
+
+
+```{r, eval= TRUE , echo = TRUE}
+
+ggplot(redwine, aes(x=pH, y=citric_acid))+ geom_point(color='gray', pch=3, 
+      alpha=0.4)+geom_smooth(method='lm')+theme_minimal()+
+  labs(x="pH Value", y="Citric Acid", title=" Density vs pH value")
+
+```
+\
+From the plot we can see the pattern that , *citric* and *pH* are **inversely proportional** to each other.\
+\
+ii. Now the plot is added to analyze the distribution of alcohol of various quantity.\ 
+
+
+```{r, eval= TRUE , echo = TRUE}
+
+
+ggplot(redwine, aes(x=quality))+ geom_histogram()+theme_minimal()+
+  labs(x="Alcohol Quality", y="Count", title="Alcohol Quality Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+\
+It can be seen that the csv file data has more numbers of red wines with the 
+average alcohol quality as compared to that of low and high quality alcohol.
+
+\newpage
+
+# Working on Forest Fires data: \
+
+## Question 2a.\
+
+The csv file for forest fires has been loaded using **read.csv()** as shown in the chunk below:\
+
+```{r,eval=TRUE, echo=TRUE}
+
+forestfire = read.csv('forestfires.csv', sep=',', header = TRUE)
+
+str(forestfire)
+
+```
+
+From the data it can be induced that the *quantitative predictors* are the data fields like **FFMC, DMC, ISI, temp, RH,wind, rain, and area**. Similarly, the qualitative predictors in the data are **month** and **day**.\
+
+Changing Qualitative predictors **month** and **day** as factor:\
+
+```{r, echo= TRUE, eval=TRUE}
+  forestfire$month <- as.factor(forestfire$month)
+  forestfire$day <- as.factor(forestfire$day)
+```
+
+Changing Qualitative predictors **RH** and **DC** as factor:\
+
+```{r, echo= TRUE, eval=TRUE}
+  forestfire$RH <- as.numeric(forestfire$RH)
+  suppressWarnings(forestfire$DC <- as.numeric(forestfire$DC))
+```
+
+Final strcuture after the adjustment:\
+
+```{r, echo= TRUE, eval=TRUE}
+  str(forestfire)
+```
+
+## Question 2b.\
+
+The range,mean and standard deviation of each quantitative predictor is given by: \
+\
+1. **FFMC:**\
+
+```{r, echo= TRUE, eval=TRUE,results='hold'}
+
+mean(forestfire$FFMC, na.rm= TRUE)
+range(forestfire$FFMC, na.rm = TRUE)
+sd(forestfire$FFMC, na.rm = TRUE)
+
+
+```
+\
+2. **DMC:** \
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$DMC, na.rm= TRUE)
+range(forestfire$DMC, na.rm = TRUE)
+sd(forestfire$DMC, na.rm = TRUE)
+
+```
+\
+3. **DC:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$DC, na.rm= TRUE)
+range(forestfire$DC, na.rm = TRUE)
+sd(forestfire$DC, na.rm = TRUE)
+
+```
+\
+4. **ISI:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$ISI, na.rm= TRUE)
+range(forestfire$ISI, na.rm = TRUE)
+sd(forestfire$ISI, na.rm = TRUE)
+
+```
+\
+5. **Temp:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$temp, na.rm= TRUE)
+range(forestfire$temp, na.rm = TRUE)
+sd(forestfire$temp, na.rm = TRUE)
+
+```
+\
+6. **RH:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$RH, na.rm= TRUE)
+range(forestfire$RH, na.rm = TRUE)
+sd(forestfire$RH, na.rm = TRUE)
+
+```
+\
+7. **Wind:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$wind, na.rm= TRUE)
+range(forestfire$wind, na.rm = TRUE)
+sd(forestfire$wind, na.rm = TRUE)
+
+```
+\
+8. **Rain:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$rain, na.rm= TRUE)
+range(forestfire$rain, na.rm = TRUE)
+sd(forestfire$rain, na.rm = TRUE)
+
+```
+\
+9. **Area:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(forestfire$area, na.rm= TRUE)
+range(forestfire$area, na.rm = TRUE)
+sd(forestfire$area, na.rm = TRUE)
+
+```
+\
+
+The day of the week that has highest number of wildfire is given by:\
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+table(forestfire$day)
+names(which.max(table(forestfire$day)))
+```
+
+## Question 2c:\
+
+Removing the data from 40 through 80:\
+\
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+modified_forestfire <- forestfire[-c(40:80),]
+
+str(modified_forestfire)
+```
+\
+
+Now calculating the mean, range and standard deviation again.\
+\
+1. **FFMC:**\
+
+```{r, echo= TRUE, eval=TRUE,results='hold'}
+
+mean(modified_forestfire$FFMC, na.rm= TRUE)
+range(modified_forestfire$FFMC, na.rm = TRUE)
+sd(modified_forestfire$FFMC, na.rm = TRUE)
+
+
+```
+\
+2. **DMC:** \
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$DMC, na.rm= TRUE)
+range(modified_forestfire$DMC, na.rm = TRUE)
+sd(modified_forestfire$DMC, na.rm = TRUE)
+
+```
+\
+3. **DC:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$DC, na.rm= TRUE)
+range(modified_forestfire$DC, na.rm = TRUE)
+sd(modified_forestfire$DC, na.rm = TRUE)
+
+```
+\
+4. **ISI:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$ISI, na.rm= TRUE)
+range(modified_forestfire$ISI, na.rm = TRUE)
+sd(modified_forestfire$ISI, na.rm = TRUE)
+
+```
+\
+5. **Temp:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$temp, na.rm= TRUE)
+range(modified_forestfire$temp, na.rm = TRUE)
+sd(modified_forestfire$temp, na.rm = TRUE)
+
+```
+\
+6. **RH:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$RH, na.rm= TRUE)
+range(modified_forestfire$RH, na.rm = TRUE)
+sd(modified_forestfire$RH, na.rm = TRUE)
+
+```
+\
+7. **Wind:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$wind, na.rm= TRUE)
+range(modified_forestfire$wind, na.rm = TRUE)
+sd(modified_forestfire$wind, na.rm = TRUE)
+
+```
+\
+8. **Rain:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$rain, na.rm= TRUE)
+range(modified_forestfire$rain, na.rm = TRUE)
+sd(modified_forestfire$rain, na.rm = TRUE)
+
+```
+\
+9. **Area:**\
+
+```{r, echo= TRUE , eval= TRUE,results='hold'}
+
+mean(modified_forestfire$area, na.rm= TRUE)
+range(modified_forestfire$area, na.rm = TRUE)
+sd(modified_forestfire$area, na.rm = TRUE)
+
+```
+\
+
+## Question 2d.\
+\
+Bar plot showing the count of forest fires in each month for which wind is greater than 4 is shown below:
+\
+```{r, eval=TRUE, echo=TRUE}
+
+ggplot(forestfire[forestfire$wind >4,], aes(x= factor(month,
+  c('jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec')), 
+  na.rm=TRUE))+geom_bar()+
+  labs(x="Month", y="Forest Fires (wind >4)", title="Month vs Forest Fire")+
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+```
+\
+
+For the month which is more common for high wind forest fires is:\
+\
+```{r, eval=TRUE, echo=TRUE}
+
+extractedInfo <- forestfire[forestfire$wind >4 ,]
+names(which.max(table(extractedInfo$month)))
+```
+
+## Question 2e.\
+\
+Interpreting the predictors graphically:\
+
+```{r fig.height=4, fig.width=7, eval=TRUE, echo=TRUE , results='hold'}
+library(ggpubr)
+
+ggplot(forestfire, aes(x= RH,y =temp, 
+  na.rm=TRUE))+geom_point(alpha=0.9,pch=2, color="red")+
+    stat_cor(method='pearson',label.x = 55 , label.y = 30)+
+  geom_smooth(method='lm')+
+  labs(title="Relative Humidity vs Temperature")+
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(forestfire, aes(x= temp,y = wind, 
+  na.rm=TRUE))+geom_point(alpha=0.9,pch=3,color= "green")+
+    stat_cor(method='pearson', label.x = 20 , label.y = 10)+
+  geom_smooth(method='lm')+
+  labs(title="Temperature vs Wind")+
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(forestfire, aes(x= DMC,y = DC, 
+  na.rm=TRUE))+geom_point(alpha=0.9,pch=4, color="blue")+
+    stat_cor(method='pearson', label.x = 100 , label.y = 900)+
+  geom_smooth(method='lm')+
+  labs(title="DMC vs DC")+
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(forestfire, aes(x= DMC,y = temp, 
+  na.rm=TRUE))+geom_point(alpha=0.9,pch=5, color="orange")+
+    stat_cor(method='pearson', label.x = 100 , label.y = 900)+
+  geom_smooth(method='lm')+
+  labs(title="DMC vs temp")+
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+\
+The first two charts showing the plots between
+**temp vs RH** and **temp vs wind** have negative correlation which means they are  inversely proportional to eachother. Also this relation is backed by the probability variable for null hypothesis of the correlation.\
+\
+
+Similarly in the next two charts which shows the plot between **DMC vs DC** and **DMC vs temp** have the positive correlation which means that they are directly proportional to each other. Also the relation is backed by the probability variable for  null hypothesis of the correlation.\
+
+One thing that I could notice here is that *temperature (temp)* is a variable which has relation to many other variables in the dataset.\
+
+Correlation matrix is given by:\
+
+```{r, eval=TRUE, echo=TRUE}
+
+releventDataFrame <- data.frame(temp= forestfire$temp , DMC = forestfire$DMC , 
+                DC= forestfire$DC , wind = forestfire$wind)
+
+cor(na.omit(releventDataFrame))
+
+```
+
+## Question 2f.\
+
+From the above correlation matrix we can say that wind has a significant correlation to temp and DMC as compared to DC. So, we can use temp and DMC variable to predict the value of wind in the data set. The wind correlation with DC is comparatively weak.
+
+

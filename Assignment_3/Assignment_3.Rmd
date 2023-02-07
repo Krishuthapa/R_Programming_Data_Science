@@ -1,0 +1,268 @@
+---
+title: 'Assignment 3: Data Transformation and Tidying'
+author: "Krishu Thapa"
+date: "2022-09-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1 (WNBA Data Sets)
+
+
+Setting up the data and printing the first few value of the columns with a header containing the string ("FG").\
+
+```{r, chunk-label, eval=TRUE, echo=TRUE, results='hold'}
+
+suppressMessages(library(dplyr))
+library(tidyr)
+
+wnba = read.csv('WNBA_Stats_21.csv', sep=',', header = TRUE)
+
+wnba %>% select(contains('FG')) %>% head(20)
+
+
+```
+
+## Question 1a.\
+
+The number of players with Free Throws Made > 50 and Assists > 75 are:\
+```{r, eval= TRUE , echo = TRUE}
+  wnba %>% na.omit() %>% filter(FTM >50 , AST > 75) %>% count()
+```
+
+## Question 1b.\
+
+The PLAYER, TEAM, FGM, TO and PTS of players with 10 highest points in descending order of points is given by:\
+
+```{r, eval= TRUE , echo = TRUE}
+  highestpoints <-wnba %>% na.omit() %>% select(PLAYER, TEAM, FGM, TO , PTS) %>% 
+  arrange(desc(PTS)) %>% top_n(10)
+  
+  highestpoints
+  
+  # Player with second highest point
+  highestpoints %>% slice(2) %>% select(PLAYER)
+```
+
+## Question 1c.
+
+Adding columns FGP and FTP to the data frame and doing additional operations is shown below:\
+
+```{r, eval= TRUE , echo = TRUE}
+
+wnba <- wnba %>% mutate(FGP =round((FGM/FGA) * 100,2) , 
+                        FTP = round((FTM/FTA) *100,2))
+
+wnba %>% select(PLAYER, FGM, FGA , FGP , FTM, FTA, FTP) %>% head(20)
+
+wnba %>%filter(.,PLAYER=='Tina Charles') %>% select(PLAYER,FGP,FTP)
+```
+\
+
+Another two columns that we can use similarly are 3PM(3 Point Fields Goals Made) and 3PA(3 Point Field Goals Attempted), this gives us the ratio of goals made to the goals attempted for a given player and can be converted to the percentage to see the success rate of the players attempt to hit a goal. It is given by,\
+
+```{r, eval= TRUE , echo = TRUE}
+wnba <- wnba %>% mutate(X3PP = round((X3PM/X3PA) * 100,2)) %>% 
+  mutate_at(c("X3PP"), ~replace_na(., 0)) 
+
+wnba %>% select(PLAYER, X3PM, X3PA,X3PP) %>%head(20)
+
+```
+
+## Question 1d.\
+
+The average, min and max REB for each team in descending order of the team average is given by:\
+
+```{r, eval= TRUE , echo = TRUE}
+
+teamREB <- wnba %>% group_by(TEAM) %>% summarise(avgREB = 
+              round(mean(REB,na.rm = TRUE),2), minREB = min(REB, na.rm= TRUE), 
+              maxREB= max(REB, na.rm=TRUE)) %>% arrange(desc(avgREB))
+
+teamREB
+
+teamREB %>% filter(maxREB == max(maxREB)) %>% select(TEAM)
+
+```
+
+
+## Question 1e.\
+
+Imputing the value for FTP and FGP.\
+
+```{r, eval= TRUE , echo = TRUE}
+
+wnba %>% group_by(TEAM) %>% mutate(FTP = replace_na(round((FGP/100) * 
+    mean(FTP,na.rm= TRUE),2))) %>% select(FTP, FGP) %>% head(20)
+
+# Second Copy
+
+copyWNBA <- wnba
+
+copyWNBA %>% group_by(TEAM) %>% mutate(FTP = replace_na(round(mean(FTP,na.rm= TRUE),2))) %>% select(FGP, FTP) %>% head(20)
+
+```
+\
+
+In th first approach , when we multiply the FTP with the FGP ,we make an assumption that all the corresponding value of FGP exists.
+However this is not true as sometimes the value of FGP can also be NA which will ultimately give the value of FTP as NA too for that row. Also, the FTP value should not be dependent on the value of FGP as those are different measurement factors. In the second approach, we impute value of FTP by the average of its team and this approach is better as it is a better approach to take the mean of a particular team to decide its missing value instead of making use of mean coming from all the teams. In this approach, we will no be getting any NA value as it is dependent on single column whose NA values can be discarded while finding the mean. There are many other columns in the data whose row data contains NA and here to we can replace the NA with the average value by grouping the data as per the team. In doing so, the imputed value will not be divergent from the value that should be presented in the NA value and dosent change the overall mean by the considerable amount. This is given by,
+
+```{r, eval= TRUE , echo = TRUE}
+
+wnba %>% group_by(TEAM) %>%
+  mutate_if(is.numeric, ~replace_na(.,floor(mean(., na.rm = TRUE))))%>% head(20)
+
+```
+
+\newpage
+
+# Question 2 (Working on tidyr package for who) 
+
+
+Reading and setting up the data:\
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+
+suppressMessages(library(tidyverse))
+
+who <- read.csv('who.csv', sep=',', header = TRUE)
+
+```
+
+
+## Question 2a.\
+
+**> mutate(key = stringr::str_replace(key, "newrel", "new_rel"))**
+
+The line above is necessary beacuse **rel** is a type of TB and it will be easier to seperate the rel when we place it in the form of **new_rel**. All other types of TB are extracted from the column whose names(eg: new_sp_m014 , new_sn_f65,etc) are seperated with underscore('_') and it will be consistent to represent **newrel** similarly or else when we try to seperate the type from column it will be giving the error info. 
+
+## Question 2b.\
+
+The numbers of entries removed from dataset when we set values_drop_na to true in pivot longer is given by:\
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+
+longWho <- who %>% 
+  pivot_longer(
+    cols = new_sp_m014:newrel_f65, 
+    names_to = "key", 
+    values_to = "cases", 
+    values_drop_na = TRUE
+  )
+
+
+# Count of the dropped data sets when na values are dropped
+
+wideWho <- longWho %>% 
+pivot_wider(names_from = key, values_from = cases)
+
+count(who) - count(wideWho)
+
+
+```
+
+## Question 2c.\
+
+The difference between an explicit and implicit missing value is that in explicit case the missing value is clearly represented by the *NA* however, in the implicit missing value there is no clear inidication of the missing value in the dataset. When the pivot_longer version of dataset is widened on the column "Key" with the values from column "cases", we can see multiple of the columns derived from the "Key" column to hold the NA value. Here, the implicit value is explicitly presented this way.
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+
+longWho <- who %>% 
+  pivot_longer(
+    cols = new_sp_m014:newrel_f65, 
+    names_to = "key", 
+    values_to = "cases", 
+    values_drop_na = TRUE
+  )
+
+wideWho <- longWho %>% 
+pivot_wider(names_from = key, values_from = cases) 
+
+wideWho %>% head(20)
+
+```
+
+## Question 2d.\
+
+Looking at the complete data and intepreting the type is given below:\
+
+```{r, echo=TRUE, eval=TRUE}
+tidyData <- who %>%
+  pivot_longer(
+    cols = new_sp_m014:newrel_f65, 
+    names_to = "key", 
+    values_to = "cases", 
+    values_drop_na = TRUE
+  ) %>% 
+  mutate(
+    key = stringr::str_replace(key, "newrel", "new_rel")
+  ) %>%
+  separate(key, c("new", "var", "sexage")) %>% 
+  select(-new, -iso2, -iso3) %>% 
+  separate(sexage, c("sex", "age"), sep = 1)
+
+tidyData
+
+str(tidyData)
+```
+I think since the countries, year, var, sex and age represent the data corresponding to different categories and levels. I think these fields should be represented in the form of **factor** rather than presenting them as the **char**.\
+
+## Question 2e.\
+
+Visualization for the data is given by,\
+
+```{r, echo=TRUE,eval=TRUE}
+
+library(ggplot2)
+
+
+## Visualtization 1 (Sex Participation)
+
+maleCount <- tidyData %>% filter(sex=='m') %>% nrow()
+femaleCount <- tidyData %>% filter(sex=='f') %>% nrow()
+
+sexPlot <- tibble(sex= c("Male", "Female"), count= c(maleCount, femaleCount))
+
+ggplot(data=sexPlot, aes(x=sex, y= count)) +
+  geom_bar(stat="identity")+theme_minimal()+
+  labs(x="Sex", y="Count", title="Sex Vs Participation")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Visualization 2 (Tuberculosis type distribution)
+
+varPlot <- tidyData %>% group_by(var) %>% count()
+
+ggplot(data=varPlot, aes(x=var, y = n)) +
+  geom_bar(stat="identity")+theme_minimal()+
+  labs(x="Tuberculosis Type", y="Count", title="Tuberculosis Type Vs Count")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+\ 
+From the first visualization we can see that almost same number of male and female were surveyed for the data.Similarly, from the second visualization we can see that the tuberculosis type(sp) has more number of cases as compared to other types. I thought it would be interesting to check over the sex because we can identify how common are tuberculosis between male and female. Also , I thought it would be interesting to test over tuberculosis type so that we can identify which type of tuberculosis is more prevalent in the tuberculosis patients.\
+
+## Question 2f.\
+
+The implementation for the given ques is given below:
+
+```{r,eval=TRUE, echo=TRUE}
+
+# Reading the data
+
+schQtr = read.csv('SchQtr.csv', sep=',', header = TRUE)
+
+tidySchQtr <- schQtr %>% pivot_longer(cols= Qtr.1:Qtr.4, names_to= "Quarter" , 
+          values_to= "Student_Count", values_drop_na = TRUE) %>% mutate(
+    Quarter = stringr::str_replace(Quarter, "Qtr_2", "Qtr.2"))%>% 
+  separate(Quarter, c("Interval_Type","Interval_Id"))
+
+tidySchQtr %>% head(10)
+
+# Count of the new restructured table.
+nrow(tidySchQtr)
+
+
+```
+
